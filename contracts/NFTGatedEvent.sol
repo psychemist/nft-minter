@@ -35,8 +35,6 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
     // user address -> event id -> is attending check
     mapping(address => mapping(uint256 => bool)) isAttending;
 
-    constructor() {}
-
     // ***  Write functions  *** //
 
     // Create event
@@ -158,6 +156,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         emit UserRegistered(msg.sender, _eventId, block.timestamp);
     }
 
+    // Check user into event
     function checkIntoEvent(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
@@ -188,6 +187,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         emit UserCheckedIn(msg.sender, _eventId, block.timestamp);
     }
 
+    // Cancel attendance for user from event
     function cancelRSVP(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
@@ -220,6 +220,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
 
     // ***  Read functions  *** //
 
+    // Get event with id
     function getEvent(uint256 _eventId) external view returns (Event memory) {
         // Perform checks
         _checkTxOrigin();
@@ -228,12 +229,14 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         return events[_eventId];
     }
 
+    // Get all events array
     function getAllEvents() external view returns (Event[] memory) {
         // Perform sanity check
         _checkTxOrigin();
         return allEvents;
     }
 
+    // Get all events array count
     function getAllEventsCount() external view returns (uint256) {
         // Perform sanity check
         _checkTxOrigin();
@@ -242,6 +245,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
 
     // ***  Private functions  *** //
 
+    // Check that transaction origin is not zero address
     function _checkTxOrigin() internal view {
         // if (msg.sender == address(0)) {
         //     revert AddressZeroDetected();
@@ -250,24 +254,28 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         require(msg.sender != address(0), AddressZeroDetected());
     }
 
+    // Check that event has been created
     function _isValidEvent(uint256 _eventId) internal view {
         if (events[_eventId].id == 0) {
             revert InvalidEventId();
         }
     }
 
+    // Check that event registration is still open
     function _isOpenEvent(uint256 _eventId) internal view {
         if (block.timestamp >= events[_eventId].deadline) {
             revert EventRegistrationClosed();
         }
     }
 
+    // Check that event is still active/live
     function _isActiveEvent(uint256 _eventId) internal view {
         if (!events[_eventId].isActive) {
             revert EventIsOver();
         }
     }
 
+    // Check that transaction origin is event manager
     function _isManager(uint256 _eventId) internal view {
         // if (events[_id].manager != msg.sender) {
         //     revert SenderNotManager();
