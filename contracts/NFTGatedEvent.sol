@@ -1,7 +1,8 @@
-// SPDX-License-Identifier:MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
 import "./NerdFT.sol";
+// import "@openzepelin/contracts/token/ERC721/ERC721.sol";
 import "./NFTGatedEventHelpers.sol";
 
 contract NFTGatedEvent is NFTGatedEventHelpers {
@@ -60,7 +61,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         // Update other event properties
         ev.name = _name;
         ev.venue = _venue;
-        ev.deadline = block.timestamp += _duration;
+        ev.deadline = uint32(block.timestamp) + _duration;
         ev.manager = msg.sender;
         ev.nft = ERC721(_nftAddress);
         ev.isActive = true;
@@ -101,14 +102,14 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         // Update event properties
         ev.name = _name;
         ev.venue = _venue;
-        ev.deadline += extension;
+        ev.deadline += _extension;
 
         // Trigger event updation event
         emit EventUpdated(msg.sender, _eventId, block.timestamp);
     }
 
     // End event registration
-    function closeEvent(_eventId) external {
+    function closeEvent(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
@@ -139,6 +140,12 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
             revert SenderAlreadyRegistered();
         }
 
+        // Read Event struct from storage
+        Event storage ev = events[_eventId];
+
+        // Check that user has Event NFT in their account
+        require(ev.nft.balanceOf(msg.sender) > 0, NFTNotDetected());
+
         // Add user to event registration mapping
         hasRegistered[msg.sender][_eventId] = true;
 
@@ -165,7 +172,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         emit UserCheckedIn(msg.sender, _eventId, block.timestamp);
     }
 
-    function cancelRegistration(uint256 _eventId) external {
+    function cancelRSVP(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
@@ -173,12 +180,12 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         _isOpenEvent(_eventId);
 
         // Check user registration validity
-        if (!hasRegistered[msg.sender][_eventId]) {
-            revert SenderNotRegistered();
+        if (!isAttending[msg.sender][_eventId]) {
+            revert SenderNotAttending();
         }
 
-        // Remove user from event registration mapping
-        hasRegistered[msg.sender][_eventId] = false;
+        // Remove user from event attendance mappings
+        isAttending[msg.sender][_eventId] = false;
 
         // Trigger user canceled event
         emit UserCanceled(msg.sender, _eventId, block.timestamp);
@@ -186,7 +193,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
 
     // ***  Read functions  *** //
 
-    function getEvent(uint256 _eventId) external returns (Event memory) {
+    function getEvent(uint256 _eventId) external view returns (Event memory) {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
@@ -194,21 +201,21 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         return events[_eventId];
     }
 
-    function getAllEvents() external returns (Event[] memory) {
+    function getAllEvents() external view returns (Event[] memory) {
         // Perform sanity check
         _checkTxOrigin();
         return allEvents;
     }
 
-    function getAllEventsCount() external returns (uint256) {
+    function getAllEventsCount() external view returns (uint256) {
         // Perform sanity check
         _checkTxOrigin();
-        return allEvents.length();
+        return allEvents.length;
     }
 
     // ***  Private functions  *** //
 
-    function _checkTxOrigin() internal pure {
+    function _checkTxOrigin() internal view {
         // if (msg.sender == address(0)) {
         //     revert AddressZeroDetected();
         // }
@@ -217,7 +224,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
     }
 
     function _isValidEvent(uint256 _eventId) internal view {
-        if (!events[_eventId]) {
+        if (events[_eventId].id == 0) {
             revert InvalidEventId();
         }
     }
@@ -239,9 +246,6 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         //     revert SenderNotManager();
         // }
 
-        require(
-            msg.sender == events[_eventId].manager,
-            SenderNotManager("You are not event manager")
-        );
+        require(msg.sender == events[_eventId].manager, SenderNotManager());
     }
 }

@@ -11,6 +11,7 @@ contract NFTGatedEventHelpers {
     error SenderAlreadyAttending();
     error SenderAlreadyRegistered();
     error SenderNotManager();
+    error SenderNotAttending();
     error SenderNotRegistered();
 
     // Events
