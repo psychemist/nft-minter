@@ -8,6 +8,7 @@ contract NFTGatedEventHelpers {
     error EventIsOver();
     error InvalidEventId();
     error NFTNotDetected();
+    error SenderAlreadyAttending();
     error SenderAlreadyRegistered();
     error SenderNotManager();
     error SenderNotRegistered();

@@ -101,14 +101,14 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         // Update event properties
         ev.name = _name;
         ev.venue = _venue;
-        ev.deadline = _deadline;
+        ev.deadline += extension;
 
         // Trigger event updation event
         emit EventUpdated(msg.sender, _eventId, block.timestamp);
     }
 
     // End event registration
-    function closeEvent() external {
+    function closeEvent(_eventId) external {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
@@ -136,7 +136,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
 
         // Check user registration validity
         if (hasRegistered[msg.sender][_eventId]) {
-            revent SenderAlreadyRegistered();
+            revert SenderAlreadyRegistered();
         }
 
         // Add user to event registration mapping
@@ -146,18 +146,42 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         emit UserRegistered(msg.sender, _eventId, block.timestamp);
     }
 
-    function checkIntoEvent() external {
+    function checkIntoEvent(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
         _isActiveEvent(_eventId);
+        _isOpenEvent(_eventId);
+
+        // Mark user isAttending check as true
+        if (isAttending[msg.sender][_eventId]) {
+            revert SenderAlreadyAttending();
+        }
+
+        // Add user to event attendance mapping
+        isAttending[msg.sender][_eventId] = true;
+
+        // Trigger user checked-in event
+        emit UserCheckedIn(msg.sender, _eventId, block.timestamp);
     }
 
-    function cancelRegistration() external {
+    function cancelRegistration(uint256 _eventId) external {
         // Perform checks
         _checkTxOrigin();
         _isValidEvent(_eventId);
         _isActiveEvent(_eventId);
+        _isOpenEvent(_eventId);
+
+        // Check user registration validity
+        if (!hasRegistered[msg.sender][_eventId]) {
+            revert SenderNotRegistered();
+        }
+
+        // Remove user from event registration mapping
+        hasRegistered[msg.sender][_eventId] = false;
+
+        // Trigger user canceled event
+        emit UserCanceled(msg.sender, _eventId, block.timestamp);
     }
 
     // ***  Read functions  *** //
