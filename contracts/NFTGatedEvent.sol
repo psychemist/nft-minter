@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "./NerdFT.sol";
-// import "@openzepelin/contracts/token/ERC721/ERC721.sol";
+import "./MyNFT.sol";
 import "./NFTGatedEventHelpers.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTGatedEvent is NFTGatedEventHelpers {
     // Storage variables
@@ -18,8 +18,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         uint32 registrations;
         uint32 attendees;
         uint32 deadline;
-        uint32 createTime;
-        ERC721 nft;
+        IERC721 nft;
         bool isActive;
     }
     Event[] allEvents;
@@ -63,7 +62,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         ev.venue = _venue;
         ev.deadline = uint32(block.timestamp) + _duration;
         ev.manager = msg.sender;
-        ev.nft = ERC721(_nftAddress);
+        ev.nft = IERC721(_nftAddress);
         ev.isActive = true;
 
         // Add new event to events mappings
@@ -103,6 +102,9 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         ev.name = _name;
         ev.venue = _venue;
         ev.deadline += _extension;
+
+        // Update event in events array
+        events[_eventId] = ev;
 
         // Trigger event updation event
         emit EventUpdated(msg.sender, _eventId, block.timestamp);
@@ -146,6 +148,9 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         // Check that user has Event NFT in their account
         require(ev.nft.balanceOf(msg.sender) > 0, NFTNotDetected());
 
+        // Increase event registrations
+        ev.registrations += 1;
+
         // Add user to event registration mapping
         hasRegistered[msg.sender][_eventId] = true;
 
@@ -160,10 +165,21 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         _isActiveEvent(_eventId);
         _isOpenEvent(_eventId);
 
-        // Mark user isAttending check as true
+        // Check user registration validity
+        if (!hasRegistered[msg.sender][_eventId]) {
+            revert SenderNotRegistered();
+        }
+
+        // Check that user is attending event
         if (isAttending[msg.sender][_eventId]) {
             revert SenderAlreadyAttending();
         }
+
+        // Read Event struct from storage
+        Event storage ev = events[_eventId];
+
+        // Increase event registrations
+        ev.attendees += 1;
 
         // Add user to event attendance mapping
         isAttending[msg.sender][_eventId] = true;
@@ -180,9 +196,20 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         _isOpenEvent(_eventId);
 
         // Check user registration validity
+        if (!hasRegistered[msg.sender][_eventId]) {
+            revert SenderNotRegistered();
+        }
+
+        // Check user attendance validity
         if (!isAttending[msg.sender][_eventId]) {
             revert SenderNotAttending();
         }
+
+        // Read Event struct from storage
+        Event storage ev = events[_eventId];
+
+        // Increase event registrations
+        ev.attendees -= 1;
 
         // Remove user from event attendance mappings
         isAttending[msg.sender][_eventId] = false;
