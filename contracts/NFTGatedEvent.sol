@@ -256,7 +256,11 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
 
     // Check that event has been created
     function _isValidEvent(uint256 _eventId) internal view {
-        if (events[_eventId].id == 0) {
+        if (events[_eventId].id <= 0) {
+            revert InvalidEventId();
+        }
+
+        if (_eventId > allEvents.length) {
             revert InvalidEventId();
         }
     }
