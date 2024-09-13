@@ -8,8 +8,6 @@ contract MyNFT is ERC721URIStorage {
     uint256 private _tokenIds;
     uint256 public totalSupply;
 
-    event Minted(address minter, uint256 tokenId);
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -27,8 +25,6 @@ contract MyNFT is ERC721URIStorage {
             _safeMint(msg.sender, newItemId);
             _setTokenURI(newItemId, _tokenURI);
         }
-
-        emit Minted(msg.sender, _tokenIds);
 
         return newItemId;
     }

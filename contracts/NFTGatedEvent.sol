@@ -102,7 +102,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         ev.deadline += _extension;
 
         // Update event in events array
-        events[_eventId] = ev;
+        allEvents[_eventId - 1] = ev;
 
         // Trigger event updation event
         emit EventUpdated(msg.sender, _eventId, block.timestamp);
@@ -127,7 +127,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
     }
 
     // Register user for event
-    function registerForEvent(uint256 _eventId) external {
+    function registerForEvent(uint256 _eventId, uint256 _nftId) external {
         // Perform sanity check
         _checkTxOrigin();
 
@@ -143,8 +143,11 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         // Read Event struct from storage
         Event storage ev = events[_eventId];
 
-        // Check that user has Event NFT in their account
+        // Check that user has event NFT in their account
         require(ev.nft.balanceOf(msg.sender) > 0, NFTNotDetected());
+
+        // Check that user has event NFT and is the owner
+        require(ev.nft.ownerOf(_nftId) == msg.sender, NFTNotDetected());
 
         // Increase event registrations
         ev.registrations += 1;
@@ -153,7 +156,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         hasRegistered[msg.sender][_eventId] = true;
 
         // Trigger user registration event
-        emit UserRegistered(msg.sender, _eventId, block.timestamp);
+        emit UserRegistered(msg.sender, _eventId);
     }
 
     // Check user into event
@@ -184,7 +187,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         isAttending[msg.sender][_eventId] = true;
 
         // Trigger user checked-in event
-        emit UserCheckedIn(msg.sender, _eventId, block.timestamp);
+        emit UserCheckedIn(msg.sender, _eventId);
     }
 
     // Cancel attendance for user from event
@@ -215,7 +218,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         isAttending[msg.sender][_eventId] = false;
 
         // Trigger user canceled event
-        emit UserCanceled(msg.sender, _eventId, block.timestamp);
+        emit UserCanceled(msg.sender, _eventId);
     }
 
     // ***  Read functions  *** //
