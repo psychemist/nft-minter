@@ -5,9 +5,6 @@ import "@openzeppelin/contracts/utils/Base64.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
-// import {Base64} from "./Base64.sol";
-// import "@openzeppelin/contracts/utils/Strings.sol";
-
 contract OnChainNFT is ERC721URIStorage, Ownable {
     uint256 private _tokenIds;
 

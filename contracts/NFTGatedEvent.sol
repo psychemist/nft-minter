@@ -1,9 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.27;
 
-import "./MyNFT.sol";
+import "./CustomNFT.sol";
 import "./NFTGatedEventHelpers.sol";
-import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 contract NFTGatedEvent is NFTGatedEventHelpers {
     // Storage variables
@@ -18,8 +17,8 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         uint32 registrations;
         uint32 attendees;
         uint32 deadline;
-        IERC721 nft;
         bool isActive;
+        CustomNFT nft;
     }
     Event[] allEvents;
 
@@ -60,7 +59,7 @@ contract NFTGatedEvent is NFTGatedEventHelpers {
         ev.venue = _venue;
         ev.deadline = uint32(block.timestamp) + _duration;
         ev.manager = msg.sender;
-        ev.nft = IERC721(_nftAddress);
+        ev.nft = CustomNFT(_nftAddress);
         ev.isActive = true;
 
         // Add new event to events mappings
